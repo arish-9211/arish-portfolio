@@ -1,13 +1,169 @@
 {
-  "profile":{"name":"Arish Ahmad","role":"Full-stack developer","eyebrow":"BUILDING WITH CURIOSITY","headline":"Thoughtful code.\nUseful experiences.","intro":"I’m Arish, a full-stack developer and BCA student turning ideas into practical web experiences with the MERN stack.","about":"I enjoy connecting the pieces: a clear interface, a dependable API, and well-organized data. My work spans a team-built career guidance platform, a Java student management system, and a Python game. I’m studying Computer Applications at Integral University, where I’m also involved in technical and student communities.","email":"arishahmad9211@gmail.com","location":"Lucknow, Uttar Pradesh","github":"https://github.com/arish-9211","linkedin":"https://www.linkedin.com/in/arishahmad9211","education":"Bachelor of Computer Applications","university":"Integral University","graduation":"2027","cgpa":"8.39 / 10.00"},
-  "projects":[
-    {"id":"careerup-ai","title":"CareerUp AI","category":"Full-stack web","summary":"A career guidance platform that brings profiles and a career-focused dashboard into one place.","description":"Built as part of a five-member team, connecting a React frontend with a Node.js and Express backend and MongoDB storage.","contributions":["Implemented user authentication and profile management.","Contributed to frontend and backend development and integrated application components.","Collaborated with a five-member team using Git and GitHub."],"tags":["React","Node.js","Express","MongoDB"],"github":"","live":"","featured":true},
-    {"id":"student-management","title":"Student Management System","category":"Java application","summary":"An organized approach to student records, built on object-oriented programming.","description":"A Java application for managing student records and common student management operations.","contributions":["Implemented student record management operations.","Applied object-oriented principles to organize application logic and improve maintainability."],"tags":["Java","OOP"],"github":"","live":"","featured":false},
-    {"id":"snake-game","title":"Snake Game","category":"Python game","summary":"A classic game exploring movement, collision detection, and event-driven controls.","description":"A Python implementation of Snake with movement, scoring, collision detection, and game-over logic.","contributions":["Built movement, collision detection, scoring, and game-over logic.","Used functions, loops, conditional logic, and event-driven controls."],"tags":["Python","Game logic"],"github":"","live":"","featured":false}
+  "profile": {
+    "name": "Arish Ahmad",
+    "role": "Full-stack developer",
+    "eyebrow": "BUILDING WITH CURIOSITY",
+    "headline": "Thoughtful code.\nUseful experiences.",
+    "intro": "I’m Arish, a full-stack developer and BCA student turning ideas into practical web experiences with the MERN stack.",
+    "about": "I enjoy connecting the pieces: a clear interface, a dependable API, and well-organized data. My work spans a team-built career guidance platform, a Java student management system, and a Python game. I’m studying Computer Applications at Integral University, where I’m also involved in technical and student communities.",
+    "email": "arishahmad9211@gmail.com",
+    "location": "Lucknow, Uttar Pradesh",
+    "github": "https://github.com/arish-9211",
+    "linkedin": "https://www.linkedin.com/in/arishahmad9211",
+    "education": "Bachelor of Computer Applications",
+    "university": "Integral University",
+    "graduation": "2027",
+    "cgpa": "8.39 / 10.00"
+  },
+
+  "projects": [
+    {
+      "id": "careerup-ai",
+      "title": "CareerUp AI",
+      "category": "Full-stack web",
+      "summary": "A career guidance platform that brings profiles and a career-focused dashboard into one place.",
+      "description": "Built as part of a five-member team, connecting a React frontend with a Node.js and Express backend and MongoDB storage.",
+      "contributions": [
+        "Implemented user authentication and profile management.",
+        "Contributed to frontend and backend development and integrated application components.",
+        "Collaborated with a five-member team using Git and GitHub."
+      ],
+      "tags": [
+        "React",
+        "Node.js",
+        "Express",
+        "MongoDB"
+      ],
+      "github": "",
+      "live": "",
+      "featured": true
+    },
+
+    {
+      "id": "student-management",
+      "title": "Student Management System",
+      "category": "Java application",
+      "summary": "An organized approach to student records, built on object-oriented programming.",
+      "description": "A Java application for managing student records and common student management operations.",
+      "contributions": [
+        "Implemented student record management operations.",
+        "Applied object-oriented principles to organize application logic and improve maintainability."
+      ],
+      "tags": [
+        "Java",
+        "OOP"
+      ],
+      "github": "",
+      "live": "",
+      "featured": false
+    },
+
+    {
+      "id": "snake-game",
+      "title": "Snake Game",
+      "category": "Python game",
+      "summary": "A classic game exploring movement, collision detection, and event-driven controls.",
+      "description": "A Python implementation of Snake with movement, scoring, collision detection, and game-over logic.",
+      "contributions": [
+        "Built movement, collision detection, scoring, and game-over logic.",
+        "Used functions, loops, conditional logic, and event-driven controls."
+      ],
+      "tags": [
+        "Python",
+        "Game logic"
+      ],
+      "github": "",
+      "live": "",
+      "featured": false
+    }
   ],
-  "skills":[{"title":"Frontend","items":["React.js","JavaScript","HTML","CSS"]},{"title":"Backend & data","items":["Node.js","Express.js","MongoDB","SQL","REST APIs"]},{"title":"Languages & foundations","items":["Python","Java","Data Structures & Algorithms","Object-Oriented Programming","DBMS","Computer Networks","Operating Systems"]},{"title":"Workflow","items":["Git","GitHub","VS Code"]}],
-  "experience":[{"title":"PromptWar","role":"Organizer member · Binary Battalion","description":"Contributed to organizing and coordinating the technical event."},{"title":"Binary Battalion","role":"Member","description":"Active member of the university’s technical student community."},{"title":"IUMUN","role":"Member","description":"Member of the university’s Model United Nations community."}],
-  "certifications":["Python Programming Certification — training in programming fundamentals and problem-solving.","4-Day Technical & Pre-Placement Bootcamp — Python with Data Science, Sipher Web Pvt. Ltd., 2026."],
-  "coding":[{"label":"HackerRank","url":"https://www.hackerrank.com/arishahmad9211"},{"label":"LeetCode","url":"https://leetcode.com/u/Arish7725/"},{"label":"CodeChef","url":"https://www.codechef.com/users/arish5486"}],
-  "posts":[]
+
+  "skills": [
+    {
+      "title": "Frontend",
+      "items": [
+        "React.js",
+        "JavaScript",
+        "HTML",
+        "CSS"
+      ]
+    },
+
+    {
+      "title": "Backend & data",
+      "items": [
+        "Node.js",
+        "Express.js",
+        "MongoDB",
+        "SQL",
+        "REST APIs"
+      ]
+    },
+
+    {
+      "title": "Languages & foundations",
+      "items": [
+        "Python",
+        "Java",
+        "Data Structures & Algorithms",
+        "Object-Oriented Programming",
+        "DBMS",
+        "Computer Networks",
+        "Operating Systems"
+      ]
+    },
+
+    {
+      "title": "Workflow",
+      "items": [
+        "Git",
+        "GitHub",
+        "VS Code"
+      ]
+    }
+  ],
+
+  "experience": [
+    {
+      "title": "PromptWar",
+      "role": "Organizer member · Binary Battalion",
+      "description": "Contributed to organizing and coordinating the technical event."
+    },
+
+    {
+      "title": "Binary Battalion",
+      "role": "Member",
+      "description": "Active member of the university’s technical student community."
+    },
+
+    {
+      "title": "IUMUN",
+      "role": "Member",
+      "description": "Member of the university’s Model United Nations community."
+    }
+  ],
+
+  "certifications": [
+    "Python Programming Certification — training in programming fundamentals and problem-solving.",
+    "4-Day Technical & Pre-Placement Bootcamp — Python with Data Science, Sipher Web Pvt. Ltd., 2026."
+  ],
+
+  "coding": [
+    {
+      "label": "HackerRank",
+      "url": "https://www.hackerrank.com/arishahmad9211"
+    },
+
+    {
+      "label": "LeetCode",
+      "url": "https://leetcode.com/u/Arish7725/"
+    },
+
+    {
+      "label": "CodeChef",
+      "url": "https://www.codechef.com/users/arish5486"
+    }
+  ],
+
+  "posts": []
 }

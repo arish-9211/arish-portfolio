@@ -1,7 +1,1428 @@
-import React,{useState,useEffect} from 'react';
-import {Save,Plus,Trash2,LogOut,Mail} from 'lucide-react';
-import {api} from './api.js';
-function Field({label,value,onChange,multiline=false,...props}){return <label>{label}{multiline?<textarea rows={4} value={value??''} onChange={e=>onChange(e.target.value)} {...props}/>:<input value={value??''} onChange={e=>onChange(e.target.value)} {...props}/>}</label>}
-function Lines({label,items,onChange}){return <Field label={label} value={items.join('\n')} multiline onChange={v=>onChange(v.split('\n'))}/>}
-function Login({onLogin}){const [error,setError]=useState('');const [busy,setBusy]=useState(false);async function submit(e){e.preventDefault();setBusy(true);try{await api('/login',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))});await onLogin();}catch(e){setError(e.message);}finally{setBusy(false)}}return <div className="login"><a className="brand" href="/">Arish<span>.</span></a><div className="eyebrow">YOUR PORTFOLIO, YOUR SPACE</div><h1>Welcome back.</h1><p>Sign in to manage your projects, writing, and portfolio content.</p><form onSubmit={submit}><label>Email<input name="email" type="email" autoComplete="username" required/></label><label>Password<input name="password" type="password" autoComplete="current-password" required/></label><button className="button mint" disabled={busy}>{busy?'Signing in…':'Sign in'}</button><p role="alert" className="error">{error}</p></form><a className="text-link" href="/">Back to portfolio</a></div>}
-export default function Admin(){const [data,setData]=useState(null);const [revision,setRevision]=useState(0);const [tab,setTab]=useState('Profile');const [status,setStatus]=useState('');const [dirty,setDirty]=useState(false);const [busy,setBusy]=useState(false);const [messages,setMessages]=useState([]);const [loading,setLoading]=useState(true);async function load(){const r=await api('/admin/content');setData(r.content);setRevision(r.revision);setDirty(false);}useEffect(()=>{load().catch(()=>{}).finally(()=>setLoading(false));},[]);useEffect(()=>{const leave=e=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',leave);return()=>window.removeEventListener('beforeunload',leave)},[dirty]);function edit(fn){setData(old=>{const next=structuredClone(old);fn(next);return next});setDirty(true);setStatus('');}function remove(kind,index,title){if(window.confirm(`Remove ${title||'this item'}? This takes effect when you save.`))edit(d=>d[kind].splice(index,1));}async function save(){setBusy(true);try{const cleaned=structuredClone(data);for(const s of cleaned.skills)s.items=s.items.map(x=>x.trim()).filter(Boolean);for(const p of cleaned.projects){p.tags=p.tags.map(x=>x.trim()).filter(Boolean);p.contributions=p.contributions.map(x=>x.trim()).filter(Boolean);}cleaned.certifications=cleaned.certifications.map(x=>x.trim()).filter(Boolean);const r=await api('/admin/content',{method:'PUT',body:JSON.stringify({content:cleaned,revision})});setData(cleaned);setRevision(r.revision);setDirty(false);setStatus('Saved. Published content is now visible on your portfolio.');}catch(e){setStatus(e.message);}finally{setBusy(false)}}async function select(t){setTab(t);setStatus('');if(t==='Inbox')try{setMessages(await api('/admin/messages'));}catch(e){setStatus(e.message)}}async function logout(){if(dirty&&!window.confirm('Leave without saving your changes?'))return;try{await api('/logout',{method:'POST',body:'{}'});setData(null);setDirty(false);}catch(e){setStatus(e.message)}}if(loading)return <div className="login"><p role="status">Opening your workspace…</p></div>;if(!data)return <Login onLogin={load}/>;const p=data.profile;return <div className="admin"><header className="admin-header"><a className="brand" href="/">Arish<span>.</span></a><span>Portfolio studio</span><a href="/" target="_blank" rel="noopener noreferrer">View portfolio</a><button className="button small" onClick={logout}><LogOut size={16}/>Sign out</button></header><div className="admin-layout"><aside aria-label="Admin sections">{['Profile','Projects','Skills','Journey','Blog','Inbox'].map(t=><button className={tab===t?'selected':''} key={t} onClick={()=>select(t)}>{t}{t==='Blog'?` (${data.posts.length})`:''}</button>)}</aside><main className="admin-main"><div className="admin-title"><div><div className="eyebrow">MAKE IT YOURS</div><h1>{tab}</h1></div>{tab!=='Inbox'&&<button className="button mint" disabled={busy||!dirty} onClick={save}><Save size={16}/>{busy?'Saving…':dirty?'Save changes':'Saved'}</button>}</div><p role="status" className="form-status">{status}</p>{tab==='Profile'&&<div className="editor-grid">{Object.entries({name:'Full name',role:'Role',eyebrow:'Intro label',headline:'Headline (two lines)',intro:'Short introduction',about:'About you',email:'Contact email',location:'Location',github:'GitHub URL',linkedin:'LinkedIn URL',education:'Degree',university:'University',graduation:'Expected graduation',cgpa:'CGPA'}).map(([key,label])=><Field key={key} label={label} value={p[key]} multiline={['headline','intro','about'].includes(key)} onChange={v=>edit(d=>{d.profile[key]=v})}/>)}</div>}{tab==='Projects'&&<><p className="muted">Edit the project details visitors see. Leave unavailable links blank.</p>{data.projects.map((pr,i)=><section className="editor-card" key={i}><div className="editor-card-title"><h3>{pr.title||'New project'}</h3><button className="icon" aria-label={`Delete ${pr.title}`} onClick={()=>remove('projects',i,pr.title)}><Trash2 size={18}/></button></div><div className="editor-grid">{['id','title','category','summary','description','github','live'].map(key=><Field key={key} label={{id:'Unique URL ID (lowercase, hyphens)',title:'Title',category:'Category',summary:'Short summary',description:'Description',github:'Source code URL',live:'Live project URL'}[key]} value={pr[key]} multiline={['summary','description'].includes(key)} onChange={v=>edit(d=>{d.projects[i][key]=v})}/>)}<Lines label="Technologies (one per line)" items={pr.tags} onChange={v=>edit(d=>{d.projects[i].tags=v})}/><Lines label="Contributions (one per line)" items={pr.contributions} onChange={v=>edit(d=>{d.projects[i].contributions=v})}/></div></section>)}<button className="button" onClick={()=>edit(d=>d.projects.push({id:`project-${Date.now()}`,title:'New project',category:'Web application',summary:'',description:'',tags:[],contributions:[],github:'',live:'',featured:false}))}><Plus size={16}/>Add project</button></>}{tab==='Skills'&&<>{data.skills.map((s,i)=><section className="editor-card" key={i}><div className="editor-card-title"><h3>{s.title}</h3><button className="icon" aria-label={`Delete ${s.title}`} onClick={()=>remove('skills',i,s.title)}><Trash2 size={18}/></button></div><Field label="Group name" value={s.title} onChange={v=>edit(d=>{d.skills[i].title=v})}/><Lines label="Skills (one per line)" items={s.items} onChange={v=>edit(d=>{d.skills[i].items=v})}/></section>)}<button className="button" onClick={()=>edit(d=>d.skills.push({title:'New group',items:[]}))}><Plus size={16}/>Add skill group</button></>}{tab==='Journey'&&<>{data.experience.map((e,i)=><section className="editor-card" key={i}><div className="editor-card-title"><h3>{e.title}</h3><button className="icon" aria-label={`Delete ${e.title}`} onClick={()=>remove('experience',i,e.title)}><Trash2 size={18}/></button></div>{['title','role','description'].map(key=><Field label={key} key={key} value={e[key]} multiline={key==='description'} onChange={v=>edit(d=>{d.experience[i][key]=v})}/>)}</section>)}<button className="button" onClick={()=>edit(d=>d.experience.push({title:'New experience',role:'Role',description:''}))}><Plus size={16}/>Add experience</button><section className="editor-card"><h3>Certifications</h3><Lines label="Certifications (one per line)" items={data.certifications} onChange={v=>edit(d=>{d.certifications=v})}/></section><section className="editor-card"><h3>Coding profiles</h3>{data.coding.map((c,i)=><div className="editor-grid" key={i}><Field label="Platform" value={c.label} onChange={v=>edit(d=>{d.coding[i].label=v})}/><Field label="Profile URL" value={c.url} onChange={v=>edit(d=>{d.coding[i].url=v})}/></div>)}</section></>}{tab==='Blog'&&<><p className="muted">Drafts stay private. Check “Published” and save to make a post visible.</p>{data.posts.length===0&&<div className="empty-admin">Your notebook is ready for its first post.</div>}{data.posts.map((b,i)=><section key={i} className="editor-card"><div className="editor-card-title"><h3>{b.title||'Untitled post'}</h3><button className="icon" aria-label={`Delete ${b.title}`} onClick={()=>remove('posts',i,b.title)}><Trash2 size={18}/></button></div><div className="editor-grid"><Field label="Title" value={b.title} onChange={v=>edit(d=>{d.posts[i].title=v})}/><Field label="Unique URL ID" value={b.id} onChange={v=>edit(d=>{d.posts[i].id=v})}/><Field label="Date" type="date" value={b.date} onChange={v=>edit(d=>{d.posts[i].date=v})}/><label className="checkbox"><input type="checkbox" checked={b.published} onChange={e=>{const checked=e.target.checked;edit(d=>{d.posts[i].published=checked})}}/>Published</label></div><Field label="Excerpt" value={b.excerpt} multiline onChange={v=>edit(d=>{d.posts[i].excerpt=v})}/><Field label="Post (plain text)" value={b.body} multiline rows={12} onChange={v=>edit(d=>{d.posts[i].body=v})}/></section>)}<button className="button" onClick={()=>edit(d=>d.posts.unshift({id:`note-${Date.now()}`,title:'',excerpt:'',body:'',date:new Date().toISOString().slice(0,10),published:false}))}><Plus size={16}/>Write a post</button></>}{tab==='Inbox'&&<><p className="muted">The latest 200 messages submitted through your portfolio.</p>{messages.length===0?<div className="empty-admin"><Mail/><p>No messages yet.</p></div>:messages.map(m=><article className="editor-card" key={m._id}><h3>{m.name}</h3><a className="text-link" href={`mailto:${m.email}`}>{m.email}</a><p className="muted">{new Date(m.createdAt).toLocaleString()}</p><p className="post-body">{m.message}</p></article>)}</>}</main></div></div>}
+import React, {
+  useState,
+  useEffect,
+} from "react";
+
+import {
+  Save,
+  Plus,
+  Trash2,
+  LogOut,
+  Mail,
+} from "lucide-react";
+
+import { api } from "./api.js";
+
+
+function Field({
+  label,
+  value,
+  onChange,
+  multiline = false,
+  ...props
+}) {
+  return (
+    <label>
+      {label}
+
+      {multiline ? (
+        <textarea
+          rows={4}
+          value={value ?? ""}
+          onChange={(e) =>
+            onChange(e.target.value)
+          }
+          {...props}
+        />
+      ) : (
+        <input
+          value={value ?? ""}
+          onChange={(e) =>
+            onChange(e.target.value)
+          }
+          {...props}
+        />
+      )}
+    </label>
+  );
+}
+
+
+function Lines({
+  label,
+  items,
+  onChange,
+}) {
+  return (
+    <Field
+      label={label}
+      value={items.join("\n")}
+      multiline
+      onChange={(v) =>
+        onChange(v.split("\n"))
+      }
+    />
+  );
+}
+
+
+function Login({
+  onLogin,
+}) {
+  const [error, setError] =
+    useState("");
+
+  const [busy, setBusy] =
+    useState(false);
+
+
+  async function submit(e) {
+    e.preventDefault();
+
+    setBusy(true);
+
+    try {
+      await api("/login", {
+        method: "POST",
+
+        body: JSON.stringify(
+          Object.fromEntries(
+            new FormData(
+              e.currentTarget
+            )
+          )
+        ),
+      });
+
+      await onLogin();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+
+  return (
+    <div className="login">
+
+      <a
+        className="brand"
+        href="/"
+      >
+        Arish
+        <span>.</span>
+      </a>
+
+
+      <div className="eyebrow">
+        YOUR PORTFOLIO, YOUR SPACE
+      </div>
+
+
+      <h1>
+        Welcome back.
+      </h1>
+
+
+      <p>
+        Sign in to manage your projects,
+        writing, and portfolio content.
+      </p>
+
+
+      <form onSubmit={submit}>
+
+        <label>
+          Email
+
+          <input
+            name="email"
+            type="email"
+            autoComplete="username"
+            required
+          />
+        </label>
+
+
+        <label>
+          Password
+
+          <input
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+          />
+        </label>
+
+
+        <button
+          className="button mint"
+          disabled={busy}
+        >
+          {busy
+            ? "Signing in…"
+            : "Sign in"}
+        </button>
+
+
+        <p
+          role="alert"
+          className="error"
+        >
+          {error}
+        </p>
+
+      </form>
+
+
+      <a
+        className="text-link"
+        href="/"
+      >
+        Back to portfolio
+      </a>
+
+    </div>
+  );
+}
+
+
+export default function Admin() {
+  const [data, setData] =
+    useState(null);
+
+  const [revision, setRevision] =
+    useState(0);
+
+  const [tab, setTab] =
+    useState("Profile");
+
+  const [status, setStatus] =
+    useState("");
+
+  const [dirty, setDirty] =
+    useState(false);
+
+  const [busy, setBusy] =
+    useState(false);
+
+  const [messages, setMessages] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+
+  async function load() {
+    const r =
+      await api("/admin/content");
+
+    setData(r.content);
+
+    setRevision(r.revision);
+
+    setDirty(false);
+  }
+
+
+  useEffect(() => {
+    load()
+      .catch(() => {})
+      .finally(() =>
+        setLoading(false)
+      );
+  }, []);
+
+
+  useEffect(() => {
+    const leave = (e) => {
+      if (dirty) {
+        e.preventDefault();
+
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener(
+      "beforeunload",
+      leave
+    );
+
+    return () =>
+      window.removeEventListener(
+        "beforeunload",
+        leave
+      );
+  }, [dirty]);
+
+
+  function edit(fn) {
+    setData((old) => {
+      const next =
+        structuredClone(old);
+
+      fn(next);
+
+      return next;
+    });
+
+    setDirty(true);
+
+    setStatus("");
+  }
+
+
+  function remove(
+    kind,
+    index,
+    title
+  ) {
+    if (
+      window.confirm(
+        `Remove ${
+          title || "this item"
+        }? This takes effect when you save.`
+      )
+    ) {
+      edit((d) =>
+        d[kind].splice(
+          index,
+          1
+        )
+      );
+    }
+  }
+
+
+  async function save() {
+    setBusy(true);
+
+    try {
+      const cleaned =
+        structuredClone(data);
+
+
+      for (
+        const s of cleaned.skills
+      ) {
+        s.items = s.items
+          .map((x) => x.trim())
+          .filter(Boolean);
+      }
+
+
+      for (
+        const p of cleaned.projects
+      ) {
+        p.tags = p.tags
+          .map((x) => x.trim())
+          .filter(Boolean);
+
+        p.contributions =
+          p.contributions
+            .map((x) => x.trim())
+            .filter(Boolean);
+      }
+
+
+      cleaned.certifications =
+        cleaned.certifications
+          .map((x) => x.trim())
+          .filter(Boolean);
+
+
+      const r = await api(
+        "/admin/content",
+        {
+          method: "PUT",
+
+          body: JSON.stringify({
+            content: cleaned,
+            revision,
+          }),
+        }
+      );
+
+
+      setData(cleaned);
+
+      setRevision(r.revision);
+
+      setDirty(false);
+
+      setStatus(
+        "Saved. Published content is now visible on your portfolio."
+      );
+    } catch (e) {
+      setStatus(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+
+  async function select(t) {
+    setTab(t);
+
+    setStatus("");
+
+    if (t === "Inbox") {
+      try {
+        setMessages(
+          await api(
+            "/admin/messages"
+          )
+        );
+      } catch (e) {
+        setStatus(e.message);
+      }
+    }
+  }
+
+
+  async function logout() {
+    if (
+      dirty &&
+      !window.confirm(
+        "Leave without saving your changes?"
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await api("/logout", {
+        method: "POST",
+        body: "{}",
+      });
+
+      setData(null);
+
+      setDirty(false);
+    } catch (e) {
+      setStatus(e.message);
+    }
+  }
+
+
+  if (loading) {
+    return (
+      <div className="login">
+        <p role="status">
+          Opening your workspace…
+        </p>
+      </div>
+    );
+  }
+
+
+  if (!data) {
+    return (
+      <Login onLogin={load} />
+    );
+  }
+
+
+  const p = data.profile;
+
+
+  return (
+    <div className="admin">
+
+      {/* ADMIN HEADER */}
+
+      <header className="admin-header">
+
+        <a
+          className="brand"
+          href="/"
+        >
+          Arish
+          <span>.</span>
+        </a>
+
+
+        <span>
+          Portfolio studio
+        </span>
+
+
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View portfolio
+        </a>
+
+
+        <button
+          className="button small"
+          onClick={logout}
+        >
+          <LogOut size={16} />
+
+          Sign out
+        </button>
+
+      </header>
+
+
+      <div className="admin-layout">
+
+        {/* SIDEBAR */}
+
+        <aside
+          aria-label="Admin sections"
+        >
+
+          {[
+            "Profile",
+            "Projects",
+            "Skills",
+            "Journey",
+            "Blog",
+            "Inbox",
+          ].map((t) => (
+
+            <button
+              className={
+                tab === t
+                  ? "selected"
+                  : ""
+              }
+              key={t}
+              onClick={() =>
+                select(t)
+              }
+            >
+              {t}
+
+              {t === "Blog"
+                ? ` (${data.posts.length})`
+                : ""}
+            </button>
+
+          ))}
+
+        </aside>
+
+
+        {/* ADMIN MAIN AREA */}
+
+        <main className="admin-main">
+
+          <div className="admin-title">
+
+            <div>
+
+              <div className="eyebrow">
+                MAKE IT YOURS
+              </div>
+
+
+              <h1>
+                {tab}
+              </h1>
+
+            </div>
+
+
+            {tab !== "Inbox" && (
+
+              <button
+                className="button mint"
+                disabled={
+                  busy || !dirty
+                }
+                onClick={save}
+              >
+                <Save size={16} />
+
+                {busy
+                  ? "Saving…"
+                  : dirty
+                    ? "Save changes"
+                    : "Saved"}
+              </button>
+
+            )}
+
+          </div>
+
+
+          <p
+            role="status"
+            className="form-status"
+          >
+            {status}
+          </p>
+
+
+          {/* PROFILE */}
+
+          {tab === "Profile" && (
+
+            <div className="editor-grid">
+
+              {Object.entries({
+                name:
+                  "Full name",
+
+                role:
+                  "Role",
+
+                eyebrow:
+                  "Intro label",
+
+                headline:
+                  "Headline (two lines)",
+
+                intro:
+                  "Short introduction",
+
+                about:
+                  "About you",
+
+                email:
+                  "Contact email",
+
+                location:
+                  "Location",
+
+                github:
+                  "GitHub URL",
+
+                linkedin:
+                  "LinkedIn URL",
+
+                education:
+                  "Degree",
+
+                university:
+                  "University",
+
+                graduation:
+                  "Expected graduation",
+
+                cgpa:
+                  "CGPA",
+              }).map(
+                ([key, label]) => (
+
+                  <Field
+                    key={key}
+                    label={label}
+                    value={p[key]}
+                    multiline={[
+                      "headline",
+                      "intro",
+                      "about",
+                    ].includes(key)}
+                    onChange={(v) =>
+                      edit((d) => {
+                        d.profile[
+                          key
+                        ] = v;
+                      })
+                    }
+                  />
+
+                )
+              )}
+
+            </div>
+
+          )}
+
+
+          {/* PROJECTS */}
+
+          {tab === "Projects" && (
+            <>
+
+              <p className="muted">
+                Edit the project
+                details visitors see.
+                Leave unavailable
+                links blank.
+              </p>
+
+
+              {data.projects.map(
+                (pr, i) => (
+
+                  <section
+                    className="editor-card"
+                    key={i}
+                  >
+
+                    <div className="editor-card-title">
+
+                      <h3>
+                        {pr.title ||
+                          "New project"}
+                      </h3>
+
+
+                      <button
+                        className="icon"
+                        aria-label={`Delete ${pr.title}`}
+                        onClick={() =>
+                          remove(
+                            "projects",
+                            i,
+                            pr.title
+                          )
+                        }
+                      >
+                        <Trash2
+                          size={18}
+                        />
+                      </button>
+
+                    </div>
+
+
+                    <div className="editor-grid">
+
+                      {[
+                        "id",
+                        "title",
+                        "category",
+                        "summary",
+                        "description",
+                        "github",
+                        "live",
+                      ].map((key) => (
+
+                        <Field
+                          key={key}
+                          label={
+                            {
+                              id:
+                                "Unique URL ID (lowercase, hyphens)",
+
+                              title:
+                                "Title",
+
+                              category:
+                                "Category",
+
+                              summary:
+                                "Short summary",
+
+                              description:
+                                "Description",
+
+                              github:
+                                "Source code URL",
+
+                              live:
+                                "Live project URL",
+                            }[key]
+                          }
+                          value={
+                            pr[key]
+                          }
+                          multiline={[
+                            "summary",
+                            "description",
+                          ].includes(
+                            key
+                          )}
+                          onChange={(v) =>
+                            edit(
+                              (d) => {
+                                d.projects[
+                                  i
+                                ][
+                                  key
+                                ] = v;
+                              }
+                            )
+                          }
+                        />
+
+                      ))}
+
+
+                      <Lines
+                        label="Technologies (one per line)"
+                        items={
+                          pr.tags
+                        }
+                        onChange={(v) =>
+                          edit((d) => {
+                            d.projects[
+                              i
+                            ].tags = v;
+                          })
+                        }
+                      />
+
+
+                      <Lines
+                        label="Contributions (one per line)"
+                        items={
+                          pr.contributions
+                        }
+                        onChange={(v) =>
+                          edit((d) => {
+                            d.projects[
+                              i
+                            ].contributions =
+                              v;
+                          })
+                        }
+                      />
+
+                    </div>
+
+                  </section>
+
+                )
+              )}
+
+
+              <button
+                className="button"
+                onClick={() =>
+                  edit((d) =>
+                    d.projects.push({
+                      id:
+                        `project-${Date.now()}`,
+
+                      title:
+                        "New project",
+
+                      category:
+                        "Web application",
+
+                      summary:
+                        "",
+
+                      description:
+                        "",
+
+                      tags:
+                        [],
+
+                      contributions:
+                        [],
+
+                      github:
+                        "",
+
+                      live:
+                        "",
+
+                      featured:
+                        false,
+                    })
+                  )
+                }
+              >
+                <Plus size={16} />
+
+                Add project
+              </button>
+
+            </>
+          )}
+
+
+          {/* SKILLS */}
+
+          {tab === "Skills" && (
+            <>
+
+              {data.skills.map(
+                (s, i) => (
+
+                  <section
+                    className="editor-card"
+                    key={i}
+                  >
+
+                    <div className="editor-card-title">
+
+                      <h3>
+                        {s.title}
+                      </h3>
+
+
+                      <button
+                        className="icon"
+                        aria-label={`Delete ${s.title}`}
+                        onClick={() =>
+                          remove(
+                            "skills",
+                            i,
+                            s.title
+                          )
+                        }
+                      >
+                        <Trash2
+                          size={18}
+                        />
+                      </button>
+
+                    </div>
+
+
+                    <Field
+                      label="Group name"
+                      value={
+                        s.title
+                      }
+                      onChange={(v) =>
+                        edit((d) => {
+                          d.skills[
+                            i
+                          ].title = v;
+                        })
+                      }
+                    />
+
+
+                    <Lines
+                      label="Skills (one per line)"
+                      items={
+                        s.items
+                      }
+                      onChange={(v) =>
+                        edit((d) => {
+                          d.skills[
+                            i
+                          ].items = v;
+                        })
+                      }
+                    />
+
+                  </section>
+
+                )
+              )}
+
+
+              <button
+                className="button"
+                onClick={() =>
+                  edit((d) =>
+                    d.skills.push({
+                      title:
+                        "New group",
+
+                      items:
+                        [],
+                    })
+                  )
+                }
+              >
+                <Plus size={16} />
+
+                Add skill group
+              </button>
+
+            </>
+          )}
+
+
+          {/* JOURNEY */}
+
+          {tab === "Journey" && (
+            <>
+
+              {data.experience.map(
+                (e, i) => (
+
+                  <section
+                    className="editor-card"
+                    key={i}
+                  >
+
+                    <div className="editor-card-title">
+
+                      <h3>
+                        {e.title}
+                      </h3>
+
+
+                      <button
+                        className="icon"
+                        aria-label={`Delete ${e.title}`}
+                        onClick={() =>
+                          remove(
+                            "experience",
+                            i,
+                            e.title
+                          )
+                        }
+                      >
+                        <Trash2
+                          size={18}
+                        />
+                      </button>
+
+                    </div>
+
+
+                    {[
+                      "title",
+                      "role",
+                      "description",
+                    ].map((key) => (
+
+                      <Field
+                        label={key}
+                        key={key}
+                        value={
+                          e[key]
+                        }
+                        multiline={
+                          key ===
+                          "description"
+                        }
+                        onChange={(v) =>
+                          edit(
+                            (d) => {
+                              d.experience[
+                                i
+                              ][
+                                key
+                              ] = v;
+                            }
+                          )
+                        }
+                      />
+
+                    ))}
+
+                  </section>
+
+                )
+              )}
+
+
+              <button
+                className="button"
+                onClick={() =>
+                  edit((d) =>
+                    d.experience.push({
+                      title:
+                        "New experience",
+
+                      role:
+                        "Role",
+
+                      description:
+                        "",
+                    })
+                  )
+                }
+              >
+                <Plus size={16} />
+
+                Add experience
+              </button>
+
+
+              {/* CERTIFICATIONS */}
+
+              <section className="editor-card">
+
+                <h3>
+                  Certifications
+                </h3>
+
+
+                <Lines
+                  label="Certifications (one per line)"
+                  items={
+                    data.certifications
+                  }
+                  onChange={(v) =>
+                    edit((d) => {
+                      d.certifications =
+                        v;
+                    })
+                  }
+                />
+
+              </section>
+
+
+              {/* CODING PROFILES */}
+
+              <section className="editor-card">
+
+                <h3>
+                  Coding profiles
+                </h3>
+
+
+                {data.coding.map(
+                  (c, i) => (
+
+                    <div
+                      className="editor-grid"
+                      key={i}
+                    >
+
+                      <Field
+                        label="Platform"
+                        value={
+                          c.label
+                        }
+                        onChange={(v) =>
+                          edit(
+                            (d) => {
+                              d.coding[
+                                i
+                              ].label =
+                                v;
+                            }
+                          )
+                        }
+                      />
+
+
+                      <Field
+                        label="Profile URL"
+                        value={
+                          c.url
+                        }
+                        onChange={(v) =>
+                          edit(
+                            (d) => {
+                              d.coding[
+                                i
+                              ].url =
+                                v;
+                            }
+                          )
+                        }
+                      />
+
+                    </div>
+
+                  )
+                )}
+
+              </section>
+
+            </>
+          )}
+
+
+          {/* BLOG */}
+
+          {tab === "Blog" && (
+            <>
+
+              <p className="muted">
+                Drafts stay private.
+                Check “Published” and
+                save to make a post
+                visible.
+              </p>
+
+
+              {data.posts.length ===
+                0 && (
+
+                <div className="empty-admin">
+                  Your notebook is
+                  ready for its first
+                  post.
+                </div>
+
+              )}
+
+
+              {data.posts.map(
+                (b, i) => (
+
+                  <section
+                    key={i}
+                    className="editor-card"
+                  >
+
+                    <div className="editor-card-title">
+
+                      <h3>
+                        {b.title ||
+                          "Untitled post"}
+                      </h3>
+
+
+                      <button
+                        className="icon"
+                        aria-label={`Delete ${b.title}`}
+                        onClick={() =>
+                          remove(
+                            "posts",
+                            i,
+                            b.title
+                          )
+                        }
+                      >
+                        <Trash2
+                          size={18}
+                        />
+                      </button>
+
+                    </div>
+
+
+                    <div className="editor-grid">
+
+                      <Field
+                        label="Title"
+                        value={
+                          b.title
+                        }
+                        onChange={(v) =>
+                          edit(
+                            (d) => {
+                              d.posts[
+                                i
+                              ].title =
+                                v;
+                            }
+                          )
+                        }
+                      />
+
+
+                      <Field
+                        label="Unique URL ID"
+                        value={
+                          b.id
+                        }
+                        onChange={(v) =>
+                          edit(
+                            (d) => {
+                              d.posts[
+                                i
+                              ].id =
+                                v;
+                            }
+                          )
+                        }
+                      />
+
+
+                      <Field
+                        label="Date"
+                        type="date"
+                        value={
+                          b.date
+                        }
+                        onChange={(v) =>
+                          edit(
+                            (d) => {
+                              d.posts[
+                                i
+                              ].date =
+                                v;
+                            }
+                          )
+                        }
+                      />
+
+
+                      <label className="checkbox">
+
+                        <input
+                          type="checkbox"
+                          checked={
+                            b.published
+                          }
+                          onChange={(
+                            e
+                          ) => {
+                            const checked =
+                              e.target
+                                .checked;
+
+                            edit(
+                              (
+                                d
+                              ) => {
+                                d.posts[
+                                  i
+                                ].published =
+                                  checked;
+                              }
+                            );
+                          }}
+                        />
+
+                        Published
+
+                      </label>
+
+                    </div>
+
+
+                    <Field
+                      label="Excerpt"
+                      value={
+                        b.excerpt
+                      }
+                      multiline
+                      onChange={(v) =>
+                        edit((d) => {
+                          d.posts[
+                            i
+                          ].excerpt = v;
+                        })
+                      }
+                    />
+
+
+                    <Field
+                      label="Post (plain text)"
+                      value={
+                        b.body
+                      }
+                      multiline
+                      rows={12}
+                      onChange={(v) =>
+                        edit((d) => {
+                          d.posts[
+                            i
+                          ].body = v;
+                        })
+                      }
+                    />
+
+                  </section>
+
+                )
+              )}
+
+
+              <button
+                className="button"
+                onClick={() =>
+                  edit((d) =>
+                    d.posts.unshift({
+                      id:
+                        `note-${Date.now()}`,
+
+                      title:
+                        "",
+
+                      excerpt:
+                        "",
+
+                      body:
+                        "",
+
+                      date:
+                        new Date()
+                          .toISOString()
+                          .slice(
+                            0,
+                            10
+                          ),
+
+                      published:
+                        false,
+                    })
+                  )
+                }
+              >
+                <Plus size={16} />
+
+                Write a post
+              </button>
+
+            </>
+          )}
+
+
+          {/* INBOX */}
+
+          {tab === "Inbox" && (
+            <>
+
+              <p className="muted">
+                The latest 200
+                messages submitted
+                through your
+                portfolio.
+              </p>
+
+
+              {messages.length ===
+              0 ? (
+
+                <div className="empty-admin">
+
+                  <Mail />
+
+                  <p>
+                    No messages yet.
+                  </p>
+
+                </div>
+
+              ) : (
+
+                messages.map(
+                  (m) => (
+
+                    <article
+                      className="editor-card"
+                      key={m._id}
+                    >
+
+                      <h3>
+                        {m.name}
+                      </h3>
+
+
+                      <a
+                        className="text-link"
+                        href={`mailto:${m.email}`}
+                      >
+                        {m.email}
+                      </a>
+
+
+                      <p className="muted">
+
+                        {new Date(
+                          m.createdAt
+                        ).toLocaleString()}
+
+                      </p>
+
+
+                      <p className="post-body">
+                        {m.message}
+                      </p>
+
+                    </article>
+
+                  )
+                )
+
+              )}
+
+            </>
+          )}
+
+        </main>
+
+      </div>
+
+    </div>
+  );
+}

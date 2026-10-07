@@ -1,1 +1,31 @@
-{"name":"arish-portfolio","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 127.0.0.1","dev:server":"node --env-file=.env server/index.js","build":"vite build","start":"node --env-file=.env server/index.js","test":"node --test server/*.test.js"},"dependencies":{"express":"^5.1.0","mongoose":"^8.19.0","react":"^19.1.1","react-dom":"^19.1.1","helmet":"^8.1.0","express-rate-limit":"^8.1.0","zod":"^4.1.0","lucide-react":"^0.468.0"},"devDependencies":{"vite":"^7.1.0","@vitejs/plugin-react":"^5.0.0","mongodb-memory-server":"^10.2.0"}}
+{
+  "name": "arish-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "dev:server": "node --env-file=.env server/index.js",
+    "build": "vite build",
+    "start": "node --env-file=.env server/index.js",
+    "test": "node --test server/*.test.js"
+  },
+
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^8.19.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "helmet": "^8.1.0",
+    "express-rate-limit": "^8.1.0",
+    "zod": "^4.1.0",
+    "lucide-react": "^0.468.0"
+  },
+
+  "devDependencies": {
+    "vite": "^7.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "mongodb-memory-server": "^10.2.0"
+  }
+}
