@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+.local/
+server/*.test.js
+node_modules/
+dist/

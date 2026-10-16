@@ -32,9 +32,31 @@ The hosted Sites preview contains the React frontend and resume. Sites runs Clou
 
 To host the complete app, use a Node-capable server and MongoDB. Build with `npm ci && npm run build`, start with `npm start`, set `NODE_ENV=production`, and use HTTPS. Set `APP_ORIGIN` to the exact HTTPS site origin if using a reverse proxy. Secure cookies require HTTPS in production. Configure your reverse proxy to preserve the Host header. If enabling Express `trust proxy`, scope it to your trusted proxy topology; do not blindly trust forwarded IP headers. For multiple server replicas, use a shared rate-limit store.
 
+## Deploy to Vercel
+
+Import `arish-9211/arish-portfolio` with the repository root as the Root Directory. The checked-in configuration selects Vite, runs `npm run build`, serves `dist`, and routes `/api/*` to the Express function in `api/index.js`. `/admin` remains a frontend route. Use Node.js 22.12 or newer.
+
+Before the production deployment, add these variables in Vercel's project settings:
+
+| Variable | Value |
+| --- | --- |
+| `MONGODB_URI` | Hosted MongoDB connection string including the portfolio database name. A local `127.0.0.1` database cannot be used by Vercel. |
+| `ADMIN_EMAIL` | Your admin sign-in email. |
+| `ADMIN_PASSWORD` | A unique password of at least 12 characters. Mark it sensitive. |
+| `NODE_ENV` | `production` |
+| `APP_ORIGIN` | The exact public HTTPS origin, without a trailing slash, once the production domain is assigned. |
+
+Mark the database connection string sensitive too. Keep secrets out of GitHub, frontend source, and any variable prefixed with `VITE_`. Apply production credentials only to Production; use a separate database and credentials for Preview environments. Environment changes require a new deployment.
+
+The database must accept connections from the selected Vercel deployment network. Configure this in your database provider; do not assume your home IP allowlist covers Vercel.
+
+The function reuses its MongoDB connection and Express app between requests. Login and contact rate limits are stored in MongoDB so separate function instances share them. Vercel's immediate proxy is trusted for HTTPS and client IP handling. Other hosting keeps Express's default proxy behavior.
+
+After deployment, verify `/api/health` returns JSON with `ok: true`, `/api/content` returns portfolio data, the resume downloads, and `/admin` loads directly. Submit one clearly labeled contact test and confirm it in the authenticated inbox. Check an admin save, private draft visibility, and logout before considering the full application verified. A visible portfolio alone is insufficient because the frontend has offline fallback content.
+
 ## Tests
 
-`npm test` starts an isolated temporary MongoDB instance and checks authentication, public/private content, draft visibility, validation, conflicting saves, contact storage, and logout. Its MongoDB binary is downloaded on first use. Tests never use your production database.
+`npm test` starts isolated temporary MongoDB instances and checks authentication, public/private content, draft visibility, validation, conflicting saves, contact storage, logout, Vercel cold starts, secure proxy cookies, and shared rate limits. Its MongoDB binary is downloaded on first use. Tests never use your production database.
 
 ## Content notes
 
