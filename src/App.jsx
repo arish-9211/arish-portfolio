@@ -98,6 +98,7 @@ function Contact({
 }) {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const emailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(profile.email)}`;
 
   async function send(e) {
     e.preventDefault();
@@ -153,7 +154,10 @@ function Contact({
 
         <a
           className="email"
-          href={`mailto:${profile.email}`}
+          href={emailComposeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Email ${profile.email} in Gmail (opens in a new tab)`}
         >
           {profile.email}
         </a>
@@ -256,7 +260,10 @@ function Contact({
 
           <a
             className="button mint"
-            href={`mailto:${profile.email}`}
+            href={emailComposeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Write an email in Gmail (opens in a new tab)"
           >
             Write an email
           </a>
